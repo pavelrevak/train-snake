@@ -1,12 +1,12 @@
 APP = vlak
 SRC = vlak.c
-RESPATH = \"res\"
+RESPATH = \"res/\"
 
 CC = $(CROSS_COMPILE)gcc
 LN = $(CROSS_COMPILE)gcc
 
 CCFLAGS = -g -O2 -c -I. -I.. -I../include `sdl-config --cflags` -DRESPATH=$(RESPATH)
-LNFLAGS = -lpthread `sdl-config --static-libs` -lSDL_gfx -lSDL_image
+LNFLAGS = -lpthread `sdl-config --libs` -lSDL_gfx -lSDL_image
 
 MAINOBJ = $(SRC:.c=.o)
 
