@@ -119,8 +119,14 @@ static int pocet_vagonov;
 
 static void drawImg(SDL_Surface *screen, SDL_Surface *img, int ix, int iy, int jx, int jy) {
 	SDL_Rect drect, srect;
-	drect.x = IMGSIZE * ix; drect.y = IMGSIZE * iy; srect.x = jx * IMGSIZE; srect.y = jy * IMGSIZE; srect.w = IMGSIZE; srect.h = IMGSIZE;
+	drect.x = IMGSIZE * ix;
+	drect.y = IMGSIZE * iy;
+	srect.x = IMGSIZE * jx;
+	srect.y = IMGSIZE * jy;
+	srect.w = IMGSIZE;
+	srect.h = IMGSIZE;
 	SDL_BlitSurface(img, &srect, screen, &drect);
+	//boxColor(screen, drect.x, drect.y, IMGSIZE, IMGSIZE, random());
 }
 
 static void draw(SDL_Surface *screen) {
@@ -129,7 +135,6 @@ static void draw(SDL_Surface *screen) {
 	if (SDL_MUSTLOCK(screen) && SDL_LockSurface(screen) < 0) return;
 	
 	boxColor(screen, 0, 0, screen->w, screen->h, 0x000000ff);
-	
 	/* scena */
 	for (i = 0; i < 20; i++) {
 		for (j = 0; j < 12; j++) {
@@ -165,6 +170,7 @@ static void draw(SDL_Surface *screen) {
 
 	SDL_Flip(screen);
 	if (SDL_MUSTLOCK(screen)) SDL_UnlockSurface(screen);
+	printf("onTime\n");
 }
 
 static void control(void) {
@@ -281,16 +287,10 @@ static int loadScena(int scena) {
 	}
 }
 
+static int onTime = 0;
+
 Uint32 timCallBack(Uint32 interval, void *param) {
-	if (++anim >= 3) anim = 0;
-	if (vrataanim && vrataanim < 5) vrataanim++;
-	if (lokobumanim < 100) {
-		lokobumanim++;
-		if (lokobumanim == 10) lokobumanim = 7;
-	} else {
-		if (!anim) if (!kolook) control();
-	}
-	draw(screen);
+	onTime = 1;
 	return interval;
 }
 
@@ -302,18 +302,20 @@ int main(int argc, char *argv[]) {
 	done = 1;
 	loadScena(aktualnaScena);
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0) { printf("init error: %s\n", SDL_GetError()); exit(1); }
-	screen = SDL_SetVideoMode(640, 384, 32, SDL_HWSURFACE | SDL_DOUBLEBUF);
-	loko = IMG_Load(RESPATH"/img/loko.png");
-	lokobum = IMG_Load(RESPATH"/img/loko-bum.png");
-	stena = IMG_Load(RESPATH"/img/stena.png");
-	vrata = IMG_Load(RESPATH"/img/vrata.png");
-	vecivagony = IMG_Load(RESPATH"/img/veci-vagony.png");
+	//screen = SDL_SetVideoMode(640, 384, 32, SDL_HWSURFACE | SDL_DOUBLEBUF);
+	screen = SDL_SetVideoMode(640, 384, 24, SDL_HWSURFACE);
+	loko = IMG_Load(RESPATH"img/loko.png");
+	lokobum = IMG_Load(RESPATH"img/loko-bum.png");
+	stena = IMG_Load(RESPATH"img/stena.png");
+	vrata = IMG_Load(RESPATH"img/vrata.png");
+	vecivagony = IMG_Load(RESPATH"img/veci-vagony.png");
+	printf("loko: %d %d\n", (int)loko->w, (int)loko->h);
 	audioInit();
-	LoadSound(0, RESPATH"/sounds/loko.wav");
-	LoadSound(1, RESPATH"/sounds/bell.wav");
-	LoadSound(2, RESPATH"/sounds/horn.wav");
-	LoadSound(3, RESPATH"/sounds/crash.wav");
-	LoadSound(4, RESPATH"/sounds/vagon.wav");
+	LoadSound(0, RESPATH"sounds/loko.wav");
+	LoadSound(1, RESPATH"sounds/bell.wav");
+	LoadSound(2, RESPATH"sounds/horn.wav");
+	LoadSound(3, RESPATH"sounds/crash.wav");
+	LoadSound(4, RESPATH"sounds/vagon.wav");
 	SDL_ShowCursor(SDL_DISABLE);
 	tim = SDL_AddTimer(150, timCallBack, NULL);
 	int keyantirepeat = 1;
@@ -376,7 +378,20 @@ int main(int argc, char *argv[]) {
 		} else if (event.type == SDL_QUIT) {
 			done = 0;
 		}
-		SDL_Delay(50);
+		if (onTime) {
+			onTime = 0;
+			if (++anim >= 3) anim = 0;
+			if (vrataanim && vrataanim < 5) vrataanim++;
+			if (lokobumanim < 100) {
+				lokobumanim++;
+				if (lokobumanim == 10) lokobumanim = 7;
+			} else {
+				if (!anim) if (!kolook) control();
+			}
+			draw(screen);
+		} else {
+			SDL_Delay(50);
+		}
 	}
 	SDL_RemoveTimer(tim);
 	SDL_CloseAudio();
